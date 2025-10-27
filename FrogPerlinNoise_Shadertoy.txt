@@ -1,0 +1,86 @@
+// 6x6 grid
+const int GRID_SIZE = 24;
+const float CELL_SIZE = 1.0 / float(GRID_SIZE);
+    
+float dist(vec2 pt, vec2 line_pt1, vec2 line_pt2) {
+    vec2 to_point = line_pt1 - pt;
+    vec2 out_v = line_pt2 - line_pt1;
+    float x = out_v.x;
+    out_v.x = out_v.y;
+    out_v.y = -x;
+    return abs(dot(to_point, out_v) / length(out_v));
+}
+
+// Precision-adjusted variations of https://www.shadertoy.com/view/4djSRW
+float hash(float p) { p = fract(p * 0.011); p *= p + 7.5; p *= p + p; return fract(p); }
+
+float rand_norm(float x) {
+    x = x * mod(4200.0, 4000.0);
+    float i = floor(x);
+    float f = fract(x);
+    float u = f * f * (3.0 - 2.0 * f);
+    return mod(mix(hash(i), hash(i + 1.0), u), 1.0);
+}
+
+vec4 horizontal_interp(vec2 uv) {
+    vec2 small_corner = vec2(floor(uv.x / CELL_SIZE) * CELL_SIZE, floor(uv.y / CELL_SIZE) * CELL_SIZE);
+    
+    // small_corner to CW big_corner
+    /*
+    float d1 = dist(uv, small_corner, small_corner + vec2(CELL_SIZE, 0));
+    float d2 = dist(uv, small_corner + vec2(CELL_SIZE, 0), small_corner + vec2(CELL_SIZE, CELL_SIZE));
+    float d3 = dist(uv, small_corner + vec2(CELL_SIZE, CELL_SIZE), small_corner + vec2(0, CELL_SIZE));
+    float d4 = dist(uv, small_corner + vec2(0, CELL_SIZE), small_corner);
+    */
+    
+    // float x = d2 / (d2 + d4);
+    // float y = d1 / (d1 + d3);
+    float x = (uv.x - small_corner.x) / CELL_SIZE;
+    float y = (uv.y - small_corner.y) / CELL_SIZE;
+    
+    float small_x = rand_norm(small_corner.x + small_corner.y * float(GRID_SIZE));
+    float big_x = rand_norm((small_corner.x + CELL_SIZE) + small_corner.y * float(GRID_SIZE));
+
+    float intensity = small_x + (big_x - small_x) * x;
+    // intensity = x;
+
+    return vec4(intensity, intensity, intensity, 1);
+}
+
+float madeup_mult(vec2 uv, float t_offset) {
+    vec2 small_corner = vec2(floor(uv.x / CELL_SIZE) * CELL_SIZE, floor(uv.y / CELL_SIZE) * CELL_SIZE);
+
+    float x = (uv.x - small_corner.x) / CELL_SIZE;
+    float y = (uv.y - small_corner.y) / CELL_SIZE;
+    
+    float small_x = rand_norm(small_corner.x + small_corner.y * float(GRID_SIZE) + t_offset);
+    float big_x = rand_norm((small_corner.x + CELL_SIZE) + small_corner.y * float(GRID_SIZE) + t_offset);
+
+    float small_y = rand_norm(small_corner.y + small_corner.x * float(GRID_SIZE) + 0.1 + t_offset);
+    float big_y = rand_norm(small_corner.y + (small_corner.x + CELL_SIZE) * float(GRID_SIZE) + 0.1 + t_offset);
+    
+    float intensity = (small_x + (big_x - small_x) * x) * (small_y + (big_y - small_y) * y);
+    return intensity;
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = fragCoord/iResolution.xy;
+
+    // Output to screen
+    // fragColor = vec4(col,1.0);
+    
+    // https://jessekaukonen.net/blog_perlin.html
+    
+    float OFFSET = CELL_SIZE / 4.0;
+    float intensity1 = madeup_mult(uv + vec2(-OFFSET, -OFFSET), iTime * 0.010 + 0.1);
+    float intensity2 = madeup_mult(uv + vec2(+OFFSET, -OFFSET), iTime * 0.010 + 0.2);
+    float intensity3 = madeup_mult(uv + vec2(+OFFSET, +OFFSET), iTime * 0.010 + 0.3);
+    float intensity4 = madeup_mult(uv + vec2(-OFFSET, +OFFSET), iTime * 0.010 + 0.4);
+    
+    float intensity = (intensity1 + intensity2 + intensity3 + intensity4) / 4.0;
+    // intensity = x;
+
+    fragColor = vec4(intensity, intensity, intensity, 1);
+    // fragColor = horizontal_interp(uv);
+}

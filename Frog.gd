@@ -110,7 +110,6 @@ func _process(delta: float) -> void:
 
 		# S shape
 		var nicer_t_val := 8.0 * pow(t_val / 2, 2)
-		# this pow function doesn't work.
 		if t_val > 0.5:
 			nicer_t_val = -8.0 * pow((t_val - 1) / 2, 2) + 1
 
