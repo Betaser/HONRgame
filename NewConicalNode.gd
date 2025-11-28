@@ -23,7 +23,7 @@ func get_wavespawner_locs() -> Array[Vector2]:
 		Vector2(0.35, 0.5)
 	]
 
-func affect_lilypad(lilypad: Lilypad) -> Vector2:
+func affect_lilypad(lilypad: Lilypad, lilypads: Array[Lilypad]) -> Vector2:
 	var strengths := get_strengths()
 	var locs := get_wavespawner_locs()
 	var total_force := Vector2.ZERO
@@ -35,10 +35,28 @@ func affect_lilypad(lilypad: Lilypad) -> Vector2:
 		var wave_loc := locs[i]
 		var strength := strengths[i]
 		var delt := lilypad.pos - wave_loc
-		var force := strength * delt.normalized() * pow(0.8, 12.0 * delt.length()) * 0.0001
+		var force := strength * delt.normalized() * pow(0.8, 12.0 * delt.length()) * 0.00004
 		forces.append(force)
 		force_mag += force.length()
-	
+
+	# As a lilypad hits other lilypads, slow down
+	"""
+	for l in lilypads:
+		if l == lilypad:
+			continue
+		
+		var l_pos := l.static_body.position + l.position
+		var l_shape := l.static_body.get_child(0) as CollisionShape2D
+		var l_radius := (l_shape.shape as CircleShape2D).radius
+		var pos := lilypad.static_body.position + lilypad.position
+		var shape := lilypad.static_body.get_child(0) as CollisionShape2D
+		var radius := (shape.shape as CircleShape2D).radius
+
+		if (l_pos - pos).length() < l_radius + radius:
+			lilypad.vel *= 0.3
+	"""
+
+
 	forces.sort_custom(func(a: Vector2, b: Vector2): return a.length() < b.length())
 	var forces_unit_sum := Vector2.ZERO
 	for i in len(forces):
@@ -46,5 +64,5 @@ func affect_lilypad(lilypad: Lilypad) -> Vector2:
 		forces_unit_sum += force * pow(0.6, i)
 	total_force = forces_unit_sum.normalized() * force_mag
 	
-	var drag_delta := -0.5 * lilypad.vel
+	var drag_delta := -0.4 * lilypad.vel
 	return drag_delta + total_force

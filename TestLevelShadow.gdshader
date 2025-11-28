@@ -12,6 +12,7 @@ vec4 handrawn_pixel(vec2 xy) {
 	return texture(handrawn_water, xy);
 }
 
+// out of date
 vec4 handrawn_shadow(vec2 xy) {
 	vec2 mid = vec2(0.5, 0.5);
 	vec2 shadow_delt = xy - mid;

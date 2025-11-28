@@ -40,7 +40,10 @@ func _process(delta: float) -> void:
 		var rand_offset = Vector2.from_angle(randf_range(0, 2 * PI)) * 0.05
 		# Spawn lilypads from somewhere?
 		# We imagine there is a bridge though for conical node.
-		lilypads.append(Lilypad.new(Vector2(0.5, 0.5) + rand_offset, rand_vel))
+		var lilypad := Lilypad.new()
+		lilypad.pos = Vector2(0.5, 0.5) + rand_offset
+		lilypad.vel = rand_vel
+		lilypads.append(lilypad)
 
 	# Remove lilypads that are offscreen.
 	lilypads = lilypads.filter(func(l: Lilypad): return (l.pos - Vector2(0.5, 0.5)).length() < 0.5)
